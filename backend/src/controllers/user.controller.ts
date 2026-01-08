@@ -34,3 +34,24 @@ export async function getAllUsers(req: Request, res: Response) {
 
   res.status(200).json(users);
 }
+
+export async function signin(req: Request, res: Response) {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    throw new BadRequestException('Invalid password');
+  }
+
+  res.status(200).json({
+    user: { id: user._id, name: user.name, email: user.email },
+    message: 'Login successful',
+  });
+}
