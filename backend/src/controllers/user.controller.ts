@@ -1,18 +1,28 @@
 import { Request, Response } from 'express';
 import { User } from '../models/user.model';
-import { NotFoundException } from '../middlewares/errors';
+import {
+  BadRequestException,
+  InternalException,
+  NotFoundException,
+} from '../middlewares/errors';
+import bcrypt from 'bcryptjs';
 
 export async function createUser(req: Request, res: Response) {
-  try {
-    const user = await User.create(req.body);
-    res.status(201).json(user);
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
+  const { name, email, password } = req.body;
+
+  if (!name.trim() || !email.trim() || !password) {
+    throw new BadRequestException('Missing required fields');
   }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  const user = await User.create({ name, email, password: hashedPassword });
+
+  if (!user) {
+    throw new InternalException('Failed to create user');
+  }
+  res.status(201).json(user);
 }
 
 export async function getAllUsers(req: Request, res: Response) {
