@@ -17,22 +17,26 @@ export async function createUser(req: Request, res: Response) {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  const user = await User.create({ name, email, password: hashedPassword });
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+  });
 
   if (!user) {
     throw new InternalException('Failed to create user');
   }
-  res.status(201).json(user);
+  res.status(201).json({ user: { id: user._id, name, email } });
 }
 
 export async function getAllUsers(req: Request, res: Response) {
-  const users = await User.find({});
+  const users = await User.find({}).select('-password');
 
   if (!users) {
     throw new NotFoundException('Users not found');
   }
 
-  res.status(200).json(users);
+  res.status(200).json({ users });
 }
 
 export async function signin(req: Request, res: Response) {
