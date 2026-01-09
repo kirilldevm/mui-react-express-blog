@@ -63,7 +63,7 @@ export async function signin(req: Request, res: Response) {
   }
 
   res.status(200).json({
-    user: { id: user._id, name: user.name, email: user.email },
+    user: { _id: user._id, name: user.name, email: user.email },
     message: 'Login successful',
   });
 }
