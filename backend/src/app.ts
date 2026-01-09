@@ -6,7 +6,16 @@ import cors from 'cors';
 
 const app = express();
 
-app.use(cors({ origin: '*' }));
+const urls = process.env.FRONTEND_URLS || 'http://localhost:3000';
+
+app.use(
+  cors({
+    origin: [urls],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Routes
