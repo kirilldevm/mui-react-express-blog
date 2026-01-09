@@ -10,8 +10,11 @@ const allowedOrigins: string[] = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://mui-react-express-blog-five.vercel.app',
-  process.env.FRONTEND_URL as string,
-];
+].filter(Boolean);
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
+}
 
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
@@ -37,7 +40,7 @@ const corsOptions: CorsOptions = {
 
 // Apply CORS to everything
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.options('/*splat', cors(corsOptions) as any);
 
 app.use(express.json());
 
