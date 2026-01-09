@@ -32,3 +32,19 @@ export async function createPost(req: Request, res: Response) {
 
   res.status(201).json({ post: newPost });
 }
+
+export async function getPostById(req: Request, res: Response) {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new BadRequestException('Post ID is required');
+  }
+
+  const post = await Post.findById(id);
+
+  if (!post) {
+    throw new NotFoundException('Post not found');
+  }
+
+  res.status(200).json({ post });
+}
