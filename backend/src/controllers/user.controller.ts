@@ -67,3 +67,19 @@ export async function signin(req: Request, res: Response) {
     message: 'Login successful',
   });
 }
+
+export async function getUserById(req: Request, res: Response) {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new BadRequestException('User ID is required');
+  }
+
+  const user = await User.findById(id).select('-password');
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  res.status(200).json({ user });
+}

@@ -5,7 +5,7 @@ const postSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  content: {
+  description: {
     type: String,
     required: true,
   },
@@ -21,8 +21,8 @@ const postSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
+  user: {
+    type: mongoose.Types.ObjectId,
     ref: 'User',
     required: true,
   },

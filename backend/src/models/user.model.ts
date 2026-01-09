@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import mongoose, { model, Schema } from 'mongoose';
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
   name: {
     type: String,
     required: true,
@@ -15,12 +15,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     minLength: 6,
   },
-  posts: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Post',
-    },
-  ],
+  posts: [{ type: mongoose.Types.ObjectId, ref: 'Post' }],
 });
 
-export const User = mongoose.model('User', userSchema);
+export const User = model('User', userSchema);

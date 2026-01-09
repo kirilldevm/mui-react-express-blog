@@ -1,124 +1,162 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { BadRequestException, NotFoundException } from '../middlewares/errors';
 import { Post } from '../models/post.model';
 import { User } from '../models/user.model';
-import { postSchema, updatePostSchema } from '../schemas/post.schema';
 
-export async function getAllPosts(req: Request, res: Response) {
-  const posts = await Post.find({});
+export const getAllPosts = async (req: Request, res: Response) => {
+  let posts;
+  try {
+    posts = await Post.find().populate('user');
+  } catch (err) {
+    return console.log(err);
+  }
 
   if (!posts) {
-    throw new NotFoundException('Posts not found');
+    return res.status(500).json({ message: 'Unexpected Error Occurred' });
   }
 
-  res.status(200).json({ posts });
-}
+  return res.status(200).json({ posts });
+};
+export const createPost = async (req: Request, res: Response) => {
+  const { title, description, location, date, image, user } = req.body;
 
-export async function createPost(req: Request, res: Response) {
-  const post = req.body;
-
-  const isValidData = postSchema.safeParse(post);
-
-  console.log(isValidData.error);
-
-  if (!isValidData.success) {
-    throw new BadRequestException(
-      'Failed to create post',
-      isValidData.error.message,
-    );
+  if (
+    !title &&
+    title.trim() === '' &&
+    !description &&
+    description.trim() === '' &&
+    !location &&
+    location.trim() === '' &&
+    !date &&
+    !user &&
+    !image &&
+    image.trim() === ''
+  ) {
+    return res.status(422).json({ message: 'Invalid Data' });
   }
 
-  const user = await User.findById(post.author);
-
-  if (!user) {
-    throw new NotFoundException('User not found');
+  let existingUser;
+  try {
+    existingUser = await User.findById(user);
+  } catch (err) {
+    return console.log(err);
   }
 
-  const newPost = await Post.create(post);
-
-  if (!newPost) {
-    throw new BadRequestException('Failed to create post');
+  if (!existingUser) {
+    return res.status(404).json({ message: 'User not found' });
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  // await user.updateOne({ $push: { posts: newPost._id } });
-  user.posts.push(newPost._id);
-  await user.save({ session });
-  await newPost.save({ session });
-  await session.commitTransaction();
+  let post;
 
-  res.status(201).json({ post: newPost });
-}
+  try {
+    post = new Post({
+      title,
+      description,
+      image,
+      location,
+      date: new Date(`${date}`),
+      user,
+    });
 
-export async function getPostById(req: Request, res: Response) {
-  const { id } = req.params;
-
-  if (!id) {
-    throw new BadRequestException('Post ID is required');
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    existingUser.posts.push(post as any);
+    await existingUser.save({ session });
+    post = await post.save({ session });
+    session.commitTransaction();
+  } catch (err) {
+    return console.log(err);
   }
-
-  const post = await Post.findById(id);
 
   if (!post) {
-    throw new NotFoundException('Post not found');
+    return res.status(500).json({ message: 'Unexpected Error Occurred' });
+  }
+  return res.status(201).json({ post });
+};
+
+export const getPostById = async (req: Request, res: Response) => {
+  const id = req.params.id;
+
+  let post;
+
+  try {
+    post = await Post.findById(id);
+  } catch (err) {
+    return console.log(err);
+  }
+  if (!post) {
+    return res.status(404).json({ message: 'No post found' });
+  }
+  return res.status(200).json({ post });
+};
+
+export const updatePost = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const { title, description, location, image } = req.body;
+
+  if (
+    !title &&
+    title.trim() === '' &&
+    !description &&
+    description.trim() === '' &&
+    !location &&
+    location.trim() === '' &&
+    !image &&
+    image.trim() === ''
+  ) {
+    return res.status(422).json({ message: 'Invalid Data' });
   }
 
-  res.status(200).json({ post });
-}
-
-export async function updatePost(req: Request, res: Response) {
-  const { id } = req.params;
-
-  if (!id) {
-    throw new BadRequestException('Post ID is required');
+  let post;
+  try {
+    post = await Post.findByIdAndUpdate(id, {
+      title,
+      description,
+      image,
+      location,
+    });
+  } catch (err) {
+    return console.log(err);
   }
-
-  const post = req.body;
-
-  const isValidData = updatePostSchema.safeParse(post);
-
-  if (!isValidData.success) {
-    throw new BadRequestException(
-      'Failed to update post',
-      isValidData.error.message,
-    );
-  }
-
-  const updatedPost = await Post.findByIdAndUpdate(id, post, { new: true });
-
-  if (!updatedPost) {
-    throw new NotFoundException('Post not found');
-  }
-
-  res.status(200).json({ post: updatedPost });
-}
-
-export async function deletePost(req: Request, res: Response) {
-  const { id } = req.params;
-
-  if (!id) {
-    throw new BadRequestException('Post ID is required');
-  }
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  const post = await Post.findByIdAndDelete(id);
 
   if (!post) {
-    throw new NotFoundException('Post not found');
+    return res.status(500).json({ message: 'Unable to update' });
   }
+  return res.status(200).json({ message: 'Updated Successfully' });
+};
 
-  const user = await User.findById(post.author);
+export const deletePost = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  let post;
+  const MAX_RETRIES = 3;
+  let attempts = 0;
+  while (attempts < MAX_RETRIES) {
+    try {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      post = await Post.findById(id).populate('user');
 
-  if (!user) {
-    throw new NotFoundException('User not found');
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      (post.user as any).posts.pull(post);
+      await (post.user as any).save({ session });
+      post = await Post.findByIdAndDelete(id);
+      await session.commitTransaction();
+      session.endSession();
+      return res.status(200).json({ message: 'Deleted Successfully' });
+    } catch (err) {
+      attempts += 1;
+      console.log(`Attempt ${attempts} failed:`, err);
+
+      if (attempts >= MAX_RETRIES) {
+        return res
+          .status(500)
+          .json({ message: 'Unable to delete after retries' });
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
   }
-
-  await user.updateOne({ $pull: { posts: post._id } }, { session });
-  await post.deleteOne({ session });
-  await session.commitTransaction();
-
-  res.status(200).json({ message: 'Post deleted successfully' });
-}
+};
