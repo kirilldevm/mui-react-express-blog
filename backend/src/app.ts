@@ -6,24 +6,25 @@ import cors, { CorsOptions } from 'cors';
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://mui-react-express-blog-five.vercel.app', // Explicitly added
-];
+// const allowedOrigins = [
+//   'http://localhost:5173',
+//   'http://localhost:3000',
+//   'https://mui-react-express-blog-five.vercel.app', // Explicitly added
+// ];
 
-if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
-}
+// if (process.env.FRONTEND_URL) {
+//   allowedOrigins.push(process.env.FRONTEND_URL);
+// }
 
 app.use(
   cors({
-    origin: allowedOrigins,
-    credentials: true, // Required if you use cookies or Authorization headers
+    origin: true,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
+
 app.options('*', cors());
 
 app.use(express.json());
