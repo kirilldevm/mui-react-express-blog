@@ -11,3 +11,5 @@ export const postSchema = z.object({
     message: 'Author must be a valid ObjectId',
   }),
 });
+
+export const updatePostSchema = postSchema.partial();

@@ -6,13 +6,21 @@ import {
   NotFoundException,
 } from '../middlewares/errors';
 import bcrypt from 'bcryptjs';
+import { createUserSchema } from '../schemas/user.schema';
 
 export async function createUser(req: Request, res: Response) {
-  const { name, email, password } = req.body;
+  const userData = req.body;
 
-  if (!name.trim() || !email.trim() || !password) {
-    throw new BadRequestException('Missing required fields');
+  const isValidData = createUserSchema.safeParse(userData);
+
+  if (!isValidData.success) {
+    throw new BadRequestException(
+      'Failed to create user',
+      isValidData.error.message,
+    );
   }
+
+  const { name, email, password } = userData;
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
