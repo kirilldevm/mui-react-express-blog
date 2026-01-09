@@ -89,7 +89,7 @@ const Profile = () => {
                   title={post.title}
                   date={post.date}
                   description={post.description}
-                  id={post}
+                  id={post._id}
                   image={post.image}
                   location={post.location}
                   user={user._id}
