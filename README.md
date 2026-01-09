@@ -2,6 +2,8 @@
 
 This is a full-stack blog app built with Node.js, Express, TypeScript, MongoDB, React, and Material UI. The backend is built with Node.js, Express, and TypeScript, and the frontend is built with React and Material UI.
 
+To visit website you have to click [here](https://mui-react-express-blog.vercel.app/) and open backend page [here](https://mui-react-express-blog.onrender.com).
+
 ## Backend
 
 ### Prerequisites
