@@ -7,7 +7,7 @@ import cors from 'cors';
 const app = express();
 
 const allowedOrigins = [
-  'https://mui-react-express-blog-five.vercel.app',
+  process.env.FRONTEND_URLS || 'http://localhost:5173',
   'http://localhost:3000',
 ];
 
